@@ -2,6 +2,7 @@ import Hero from "./_components/hero";
 import HeroForm from "./_components/form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import Footer from "@/components/footer";
 
 export default function HomePage() {
   return (
@@ -124,6 +125,7 @@ export default function HomePage() {
         <Hero />
         <HeroForm />
       </div>
+      <Footer />
     </>
   );
 }
