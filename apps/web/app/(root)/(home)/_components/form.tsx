@@ -51,7 +51,7 @@ const HeroForm = () => {
           htmlFor="terms"
           className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 ml-2"
         >
-          Accept terms and conditions
+         Add nearby airports
         </label>
       </div>
       <Button className="w-full bg-blue-500 rounded-lg text-white p-4 font-bold">
