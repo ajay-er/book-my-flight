@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Flight, FlightDocument } from './schema/flight.schema';
 import { Booking, BookingDocument } from './schema/booking.schema';
+import { CreateFlightDto } from './dto/create-flight.dto';
 
 @Injectable()
 export class FlightService {
@@ -26,12 +31,14 @@ export class FlightService {
       .exec();
   }
 
-  async bookFlight(flightId: string, userId: string): Promise<Booking> {
+  async bookFlight(flightNumber: string, userId: string): Promise<Booking> {
     const session = await this.flightModel.db.startSession();
     session.startTransaction();
 
     try {
-      const flight = await this.flightModel.findById(flightId).session(session);
+      const flight = await this.flightModel
+        .findOne({ flightNumber: flightNumber })
+        .session(session);
 
       if (!flight) {
         throw new NotFoundException('Flight not found');
@@ -45,9 +52,10 @@ export class FlightService {
       flight.seatsAvailable -= 1;
       await flight.save({ session });
 
+      console.log(flight);
       // Create booking record
       const booking = new this.bookingModel({
-        flightId,
+        flightId: flight.id,
         userId,
         bookingDate: new Date(),
       });
@@ -61,5 +69,42 @@ export class FlightService {
     } finally {
       session.endSession();
     }
+  }
+
+  async createFlight(createFlightDto: CreateFlightDto): Promise<Flight> {
+    const departureDate = new Date(createFlightDto.departureTime);
+    const arrivalDate = new Date(createFlightDto.arrivalTime);
+
+    if (departureDate <= new Date()) {
+      throw new BadRequestException('Departure time must be in the future.');
+    }
+
+    if (arrivalDate <= departureDate) {
+      throw new BadRequestException(
+        'Arrival time must be after departure time.',
+      );
+    }
+
+    if (createFlightDto.seatsAvailable <= 0) {
+      throw new BadRequestException(
+        'Seats available must be greater than zero.',
+      );
+    }
+
+    const existingFlight = await this.flightModel.findOne({
+      flightNumber: createFlightDto.flightNumber,
+    });
+    if (existingFlight) {
+      throw new BadRequestException('Flight number already exists.');
+    }
+
+    const flightData = {
+      ...createFlightDto,
+      departureTime: departureDate,
+      arrivalTime: arrivalDate,
+    };
+
+    const flight = new this.flightModel(flightData);
+    return flight.save();
   }
 }

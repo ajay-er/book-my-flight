@@ -1,8 +1,9 @@
-import { Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { FlightService } from './flight.service';
 import { Flight } from './schema/flight.schema';
 import { GetCurrentUser, Public } from 'src/shared/decorators';
 import { Booking } from './schema/booking.schema';
+import { CreateFlightDto } from './dto/create-flight.dto';
 
 @Controller('flight')
 export class FlightController {
@@ -23,12 +24,18 @@ export class FlightController {
     );
   }
 
-  @Post(':flightId')
+  @Post('create')
+  async createFlight(
+    @Body() createFlightDto: CreateFlightDto,
+  ): Promise<Flight> {
+    return this.flightService.createFlight(createFlightDto);
+  }
+
+  @Post(':flightNumber')
   async bookFlight(
-    @Param('flightId') flightId: string,
+    @Param('flightNumber') flightNumber: string,
     @GetCurrentUser('sub') userId: string,
   ): Promise<Booking> {
-    console.log(userId);
-    return this.flightService.bookFlight(flightId, userId);
+    return this.flightService.bookFlight(flightNumber, userId);
   }
 }
